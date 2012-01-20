@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+#-------------------------------------------------------------------------------
+# NAME: vroom
+#
+# USAGE: vroom [FILENAME]
+#
+# DESCRIPTION:
+# 
+#-------------------------------------------------------------------------------
+
+import sys
+import os
+import vroom
+
+version = '0.1.0'
+header = r''' 
+   _   ___________  ____  ____ ___ 
+  | | / / ___/ __ \/ __ \/ __ `__ \
+  | |/ / /  / /_/ / /_/ / / / / / /
+  |___/_/   \____/\____/_/ /_/ /_/
+  version {}
+'''
+
+def usage():
+   print('  USAGE: {} [FILENAME]'.format(sys.argv[0]))
+
+try:
+   filename = sys.argv[1]
+except IndexError:
+   usage()
+   sys.exit(1)
+
+if not os.path.exists(filename):
+   print('  ERROR: file ({}) does not exist'.format(filename))
+   sys.exit(1)
+
+
+print header.format(version)
+
+app_path = os.path.dirname(filename) 
+app_path = os.path.abspath(app_path)
+
+print ' -- appending path: {}'.format(app_path)
+sys.path.append(app_path)
+
+module = os.path.basename(filename)
+module = os.path.splitext(module)[0]
+print ' -- importing {} application'.format(module)
+exec('from {} import *'.format(module))
+
+
+def assign_app_callbacks():
+   g = globals()
+   get_func = lambda f: g[f] if f in g else None
+
+   func_list = { }
+   for func in ['init', 'gl_init', 'draw', 'frame', 'button_press', 'button_release', 'motion']:
+      func_list.setdefault(func, get_func(func))
+
+   escape  = lambda code: '\033[{}m'.format(code)
+   success = lambda: escape(32) + '*' + escape(0)
+   fail    = lambda: escape(31) + 'X' + escape(0)
+
+   print ' -- assigning callbacks\n'
+   print '   ' + '\n   '.join('[{}] {}'.format(success() if func else fail(), name) for name, func in func_list.items())
+   print  
+
+   print ' -- creating application object'
+   vroom._App = vroom.application.Application(**func_list)
+
+def main():
+   assign_app_callbacks()
+
+   print ' -- lauching application'
+   vroom._App.run()
+
+if __name__ == '__main__':
+   main()
