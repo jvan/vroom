@@ -3,7 +3,7 @@ from environment import *
 from color import *
 from lighting import *
 from transform import *
-from shape import *
+from rendering import *
 from typography import *
 
 _App = None
