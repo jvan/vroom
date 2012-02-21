@@ -9,6 +9,7 @@
 #-------------------------------------------------------------------------------
 
 import sys
+import imp
 import os
 import vroom
 
@@ -40,18 +41,26 @@ print header.format(version)
 app_path = os.path.dirname(filename) 
 app_path = os.path.abspath(app_path)
 
-print ' -- appending path: {}'.format(app_path)
-sys.path.append(app_path)
-
 module = os.path.basename(filename)
 module = os.path.splitext(module)[0]
-print ' -- importing {} application'.format(module)
-exec('from {} import *'.format(module))
 
+print ' -- importing {} application'.format(module)
+
+try:
+   file = open(filename)
+   mod = imp.load_source(module, app_path, file)
+   file.close()
+except ImportError:
+   print 'ERROR: could not import module'
+   sys.exit(1)
 
 def assign_app_callbacks():
-   g = globals()
-   get_func = lambda f: g[f] if f in g else None
+   
+   def get_func(f):
+      try:
+         return mod.__dict__[f]
+      except KeyError:
+         return None
 
    func_list = { }
    for func in ['init', 'gl_init', 'draw', 'frame', 'button_press', 'button_release', 'motion']:
