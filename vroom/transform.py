@@ -45,6 +45,15 @@ def rotate(*args):
    glRotatef(ry, 0.0, 1.0, 0.0)
    glRotatef(rz, 0.0, 0.0, 1.0)
 
+def rotateX(rx):
+   glRotatef(rx, 1.0, 0.0, 0.0)
+
+def rotateY(ry):
+   glRotatef(ry, 0.0, 1.0, 0.0)
+
+def rotateZ(rz):
+   glRotatef(rz, 0.0, 0.0, 1.0)
+
 def translate(*args):
    ''' Move in (x,y,z) space.
 
@@ -55,6 +64,15 @@ def translate(*args):
 
    tx, ty, tz = Vector.helper(*args).data() 
    glTranslate(tx, ty, tz)
+
+def translateX(tx):
+   translate(tx, 0, 0)
+
+def translateY(ty):
+   translate(0, ty, 0)
+
+def translateZ(tz):
+   translate(0, 0, tz)
 
 def scale(*args):
    ''' Scale the model in x-, y-, and z-directions.
