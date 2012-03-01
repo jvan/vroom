@@ -9,7 +9,6 @@
 #-------------------------------------------------------------------------------
 
 import sys
-import imp
 import os
 import vroom
 
@@ -38,23 +37,7 @@ if not os.path.exists(filename):
 
 print header.format(version)
 
-app_path = os.path.dirname(filename) 
-app_path = os.path.abspath(app_path)
-
-module = os.path.basename(filename)
-module = os.path.splitext(module)[0]
-
-print ' -- importing {} application'.format(module)
-
-try:
-   file = open(filename)
-   mod = imp.load_source(module, app_path, file)
-   file.close()
-except ImportError:
-   print 'ERROR: could not import module'
-   sys.exit(1)
-
-def assign_app_callbacks():
+def assign_app_callbacks(mod):
    
    def get_func(f):
       try:
@@ -74,11 +57,23 @@ def assign_app_callbacks():
    print '   ' + '\n   '.join('[{}] {}'.format(success() if func else fail(), name) for name, func in func_list.items())
    print  
 
+   args = []
+   hydra_config_path = '/usr/local/etc/vroom/RazerHydra.cfg' 
+   if os.path.exists(hydra_config_path):
+      print ' -- enabling Razer Hydra support'
+      args.extend(['-mergeConfig', hydra_config_path])
+
    print ' -- creating application object'
-   vroom._App = vroom.application.Application(**func_list)
+   if '--live' in sys.argv:
+      vroom._App = vroom.application.LiveCodingApplication(args=args, **func_list)
+      vroom._App.monitor(vroom._App_Path, filename)
+   else:
+      vroom._App = vroom.application.Application(args=args, **func_list)
 
 def main():
-   assign_app_callbacks()
+   mod = vroom.load_module(filename)
+
+   assign_app_callbacks(mod)
 
    print ' -- lauching application'
    vroom._App.run()

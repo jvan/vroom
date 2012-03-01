@@ -5,6 +5,9 @@
 import pyvrui
 from OpenGL.GL import *
 import sys
+import os
+from utils import reload_module
+import pyinotify
 
 MainMenuOptions = { 'title': 'vroom', 'items': [] }
 
@@ -23,8 +26,8 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       def __init__(self):
          pyvrui.DataItem.__init__(self)
 
-   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion):
-      pyvrui.Application.__init__(self, sys.argv)
+   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args):
+      pyvrui.Application.__init__(self, sys.argv+args)
       pyvrui.GLObject.__init__(self)
 
       self._init = init
@@ -129,3 +132,45 @@ class Application(pyvrui.Application, pyvrui.GLObject):
    @pyvrui.ToolManager.ToolDestructionCallback
    def toolDestructionCallback(self, data):
       pass
+
+
+class LiveCodingApplication(Application):
+
+   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args):
+      Application.__init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args)
+
+   def monitor(self, path, filename):
+
+      class EventHandler(pyinotify.ProcessEvent):
+         def __init__(self, app, files):
+            self.app = app
+            self.watch_list = files
+
+         def process_IN_CLOSE_WRITE(self, event):
+            f = event.name and os.path.join(event.path, event.name) or event.path
+            if event.name in self.watch_list:
+               mod = reload_module() 
+               self.app._display = mod.__dict__['draw']
+               if 'frame' in mod.__dict__:
+                  self.app._frame = mod.__dict__['frame']
+
+      print ' -- monitoring path={}'.format(path)
+      self.wm = pyinotify.WatchManager()
+      self._Notifier = pyinotify.Notifier(self.wm, EventHandler(self, [filename]), timeout=10)
+      self.wm.add_watch(path, pyinotify.IN_CLOSE_WRITE)
+
+   def frame(self):
+
+      try:
+         self._Notifier.process_events()
+         while self._Notifier.check_events():
+            self._Notifier.read_events()
+            self._Notifier.process_events()
+
+      except Exception, e:
+         print 'LiveCodingApplication.frame: error reloading module'
+         print e
+         pass
+
+      Application.frame(self)
+ 
