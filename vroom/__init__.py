@@ -1,4 +1,5 @@
 from application import *
+from utils import *
 from environment import *
 from color import *
 from lighting import *
@@ -7,11 +8,43 @@ from rendering import *
 from typography import *
 
 _App = None
+_App_Path = None 
+_Module_Name = None
+_Resource_Paths = None
 
 pushMatrix = glPushMatrix
 popMatrix = glPopMatrix
 pointSize = glPointSize
 lineWidth = glLineWidth
+
+class point_list(list):
+   def for_each(self, callback, *args, **kwargs):
+      for point in self:
+         pushMatrix()
+         translate(point)
+         callback(*args, **kwargs)
+         popMatrix()
+
+class ResourceNotFound: 
+   def __init__(self, filename):
+      self.filename = filename
+
+def  get_resource(filename):
+
+   # Check for the file in the application's data directory
+   path = os.path.join(_Resource_Paths[0], 'data', filename)
+   if os.path.exists(path):
+      print ' -- found application resource'
+      return path
+
+   # Check for the file in the global vroom resource dir
+   path = os.path.join(_Resource_Paths[1], 'data', filename)
+   if os.path.exists(path):
+      print ' -- found global resource'
+      return path
+
+   #return os.path.join(_App_Path, 'data', filename)
+   raise ResourceNotFound(filename)
 
 from random import random, randrange
 
