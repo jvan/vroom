@@ -1,47 +1,42 @@
 #!/usr/bin/env vroom
+
 from vroom import *
 
-NUM_CUBES = 1000
+# Functions
 
-vertices = list(random_vertex_generator(NUM_CUBES, -100.0, 100.0))
+def toggleLighting():
+   Global.UseLighting = not Global.UseLighting
 
-colors = list(random_color_generator(NUM_CUBES))
+def toggleColor():
+   Global.UseColor = not Global.UseColor
 
-UseLighting = False
-UseColor = False
+def setColor(c):
+   c = c if Global.UseColor else c[0]
+   material(c) if Global.UseLighting else color(c)
+
+# vroom callbacks
 
 def init():
+   setMainMenuTitle('Cubes')
    addMainMenuItem('Lighting', toggleLighting, type='toggle')
    addMainMenuItem('Color', toggleColor, type='toggle')
 
-def toggleLighting():
-   global UseLighting
-   UseLighting = not UseLighting
+   Global.UseLighting = False
+   Global.UseColor = False
 
-def toggleColor():
-   global UseColor
-   UseColor = not UseColor
-
-def draw():
-   lighting(UseLighting)
+   NUM_CUBES = 1000
+   Global.vertices = list(random_vertex_generator(NUM_CUBES, -100.0, 100.0))
+   Global.colors = list(random_color_generator(NUM_CUBES))
    
-   cube_style = 'solid' if UseLighting else 'wireframe'
+def draw():
+   lighting(Global.UseLighting)
+   
+   cube_style = 'solid' if Global.UseLighting else 'wireframe'
 
-   for (v,c) in zip(vertices,colors):
+   for (v,c) in zip(Global.vertices, Global.colors):
       pushMatrix()
       translate(v)
-
-      if UseColor:
-         color_value = c
-      else:
-         color_value = c[0]
-
-      if UseLighting:
-         material(color_value)
-      else:
-         color(color_value)
-         
-      cube(1.0, style=cube_style)
-
+      setColor(c)
+      cube(3.0, style=cube_style)
       popMatrix()
 
