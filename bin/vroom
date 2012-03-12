@@ -58,15 +58,15 @@ def assign_app_callbacks(mod):
    print  
 
    args = []
-   hydra_config_path = '/usr/local/etc/vroom/RazerHydra.cfg' 
-   if os.path.exists(hydra_config_path):
-      print ' -- enabling Razer Hydra support'
-      args.extend(['-mergeConfig', hydra_config_path])
+   config_path = '/usr/local/etc/vroom/mods-enabled'
+   for config in [x for x in os.listdir(config_path) if x.endswith('.cfg')]:
+      print ' -- found config file: {}'.format(config)
+      args.extend(['-mergeConfig', os.path.join(config_path, config)])
 
    print ' -- creating application object'
    if '--live' in sys.argv:
       vroom._App = vroom.application.LiveCodingApplication(args=args, **func_list)
-      vroom._App.monitor(vroom._App_Path, filename)
+      vroom._App.monitor(vroom._App_Path, os.path.basename(filename))
    else:
       vroom._App = vroom.application.Application(args=args, **func_list)
 
