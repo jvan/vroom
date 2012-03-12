@@ -126,18 +126,30 @@ class Application(pyvrui.Application, pyvrui.GLObject):
          self.locatorTool = data.tool
          # Assign callbacks
          data.tool.getButtonPressCallbacks().add(self.buttonPressCallback)
-         data.tool.getButtonReleseCallbacks().add(self.buttonReleaseCallback)
-         data.tool.getButtonMotionCallbacks().add(self.buttonMotionCallback)
+         data.tool.getButtonReleaseCallbacks().add(self.buttonReleaseCallback)
+         data.tool.getMotionCallbacks().add(self.motionCallback)
 
    @pyvrui.ToolManager.ToolDestructionCallback
    def toolDestructionCallback(self, data):
       pass
+
+import traceback
+import StringIO
+
+def genTraceback():
+    fp = StringIO.StringIO()
+    traceback.print_exc(file=fp)
+    message = fp.getvalue()
+    
+    print message
+    print "\nFix application source to continue.\n"
 
 
 class LiveCodingApplication(Application):
 
    def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args):
       Application.__init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args)
+      self.broken = False
 
    def monitor(self, path, filename):
 
@@ -145,15 +157,28 @@ class LiveCodingApplication(Application):
          def __init__(self, app, files):
             self.app = app
             self.watch_list = files
+            print 'EventHandler.watch_list={}'.format(self.watch_list)
 
          def process_IN_CLOSE_WRITE(self, event):
             f = event.name and os.path.join(event.path, event.name) or event.path
+            print ' !! processing event {}, {}'.format(event.path, event.name)
             if event.name in self.watch_list:
                mod = reload_module() 
                self.app._display = mod.__dict__['draw']
-               if 'frame' in mod.__dict__:
-                  self.app._frame = mod.__dict__['frame']
+               self.app.broken = False
 
+               if 'frame' in mod.__dict__: 
+                  self.app._frame = mod.__dict['frame']
+
+               if 'button_press' in mod.__dict__: 
+                  self.app._button_press = mod.__dict['button_press']
+               
+               if 'button_release' in mod.__dict__: 
+                  self.app._button_release = mod.__dict['button_release']
+
+               if 'motion' in mod.__dict__:
+                  self.app._motion = mod.__dict__['motion']
+               
       print ' -- monitoring path={}'.format(path)
       self.wm = pyinotify.WatchManager()
       self._Notifier = pyinotify.Notifier(self.wm, EventHandler(self, [filename]), timeout=10)
@@ -174,3 +199,18 @@ class LiveCodingApplication(Application):
 
       Application.frame(self)
  
+   def display(self, context):
+      
+      if self.broken:
+         return
+
+      try:
+         Application.display(self, context)
+      except Exception, e:
+         print '!' * 60
+         print 'LiveCodingApplication.display error'
+         print
+         genTraceback()
+         print '!' * 60
+
+         self.broken = True
