@@ -3,6 +3,7 @@ from OpenGL.GL import glPushMatrix, glPopMatrix
 from vroom.transform import scale, translate
 
 from point_cloud import *
+from misc import *
 
 HasContext = False
 
@@ -194,4 +195,10 @@ def sphereDetail(*args):
       SphereRes['slices'] = args[0]
       SphereRes['stacks'] = args[1]
 
+
+def line(p1, p2):
+   glBegin(GL_LINES)
+   glVertex3fv(p1)
+   glVertex3fv(p2)
+   glEnd()
 
