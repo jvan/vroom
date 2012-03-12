@@ -1,43 +1,52 @@
 #!/usr/bin/env vroom
 from vroom import *
 
-data = open('data/earthquakes-2010.dat').readlines()[2:]
+# vroom callbacks
 
-vertices = []
-labels = []
-colors = []
-center = []
+def init():
 
-for row in data:
-   elems = row.split()
-   epicenter = map(float, elems[2:5]) 
-   vertices.append(epicenter)
+   vertices = []
+   colors = []
 
-   magnitude = float(elems[5])
-   if magnitude > 3.5:
-      colors.append([1.0, 0.0, 0.0, 0.4])
-   else:
-      colors.append([0.0, 1.0, 0.0, 0.4])
+   filename = get_resource('earthquakes-2010.dat')
+   data = open(filename).readlines()[2:]
 
-   if magnitude > 4.0:
-      labels.append(('{:.1f}'.format(magnitude), epicenter))
+   Global.labels = []
+
+   for row in data:
+      elems = row.split()
+      epicenter = map(float, elems[2:5]) 
+      vertices.append(epicenter)
+
+      magnitude = float(elems[5])
+      if magnitude > 3.5:
+         colors.append([1.0, 0.0, 0.0, 0.4])
+      else:
+         colors.append([0.0, 1.0, 0.0, 0.4])
+
+      if magnitude > 4.0:
+         Global.labels.append(('{:.1f}'.format(magnitude), epicenter))
+
+   Global.points = PointCloud(vertices, colors)
+   Global.center = [-1.0*x for x in Global.points.center()]
 
 def gl_init():
-   global points
-   points = PointCloud(vertices, colors)
-   points.sprite('share/particle.bmp')
-   global center
-   center = [-1.0*x for x in points.center()]
+   spriteFile = get_resource('particle.bmp')
+   Global.points.sprite(spriteFile)
 
-   textFont('share/fonts/DroidSans.ttf')
+   fontFile = get_resource('fonts/DroidSans.ttf')
+   textFont(fontFile)
 
 def draw():
    lighting(False)
-   pushMatrix()
-   translate(center)
-   points.draw()
 
-   for (txt, pos) in labels:
-      text(txt, pos[0], pos[1], pos[2])
+   pushMatrix()
+   translate(Global.center)
+
+   Global.points.draw()
+
+   for (label, pos) in Global.labels:
+      text(label, pos)
 
    popMatrix()
+
