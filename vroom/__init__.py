@@ -17,6 +17,14 @@ popMatrix = glPopMatrix
 pointSize = glPointSize
 lineWidth = glLineWidth
 
+red   = [1.0, 0.0, 0.0]
+green = [0.0, 1.0, 0.0]
+blue  = [0.0, 0.0, 1.0]
+
+
+class _Global: pass
+Global = _Global()
+
 class point_list(list):
    def for_each(self, callback, *args, **kwargs):
       for point in self:
@@ -31,16 +39,18 @@ class ResourceNotFound:
 
 def  get_resource(filename):
 
+   print ' -- searching for resource {}'.format(filename)
+
    # Check for the file in the application's data directory
    path = os.path.join(_Resource_Paths[0], 'data', filename)
    if os.path.exists(path):
-      print ' -- found application resource'
+      print ' -- found application resource {}'.format(path)
       return path
 
    # Check for the file in the global vroom resource dir
    path = os.path.join(_Resource_Paths[1], 'data', filename)
    if os.path.exists(path):
-      print ' -- found global resource'
+      print ' -- found global resource {}'.format(path)
       return path
 
    #return os.path.join(_App_Path, 'data', filename)
