@@ -1,7 +1,7 @@
 import FTGL
 from OpenGL.GL import *
 
-Font = None
+_Font = None
 
 # processing syntax
 #
@@ -10,14 +10,18 @@ Font = None
 # text(stringdata, x, y, width, height)
 # text(stringdata, x, y, width, height, z)
 
-def text(data, x, y, z):
+def text(data, *args):
+   if len(args) == 1:
+      x, y, z = args[0]
+   else:
+      x, y, z = args
    _text_pixmap(data, x, y, z)
 
 def _text_pixmap(data, x, y, z):
    glPushMatrix()
    glTranslatef(x, y, z)
    glRasterPos(0.05, 0.05)
-   Font.Render(data)
+   _Font.Render(data)
    glPopMatrix()
 
 def _text_texture(data, x, y, z):
@@ -27,7 +31,7 @@ def _text_texture(data, x, y, z):
    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
    glPushMatrix()
    glTranslatef(x, y, z)
-   Font.Render(data)
+   _Font.Render(data)
    glPopMatrix()
    glDisable(GL_TEXTURE_2D)
    glDisable(GL_BLEND)
@@ -38,6 +42,6 @@ def _text_texture(data, x, y, z):
 # textFont(font, size)
 
 def textFont(filename, size=10):
-   global Font
-   Font = FTGL.PixmapFont(filename)
-   Font.FaceSize(size, 0)
+   global _Font
+   _Font = FTGL.PixmapFont(filename)
+   _Font.FaceSize(size, 0)
