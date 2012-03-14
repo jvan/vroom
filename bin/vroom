@@ -59,7 +59,13 @@ def assign_app_callbacks(mod):
 
    args = []
    config_path = '/usr/local/etc/vroom/mods-enabled'
-   for config in [x for x in os.listdir(config_path) if x.endswith('.cfg')]:
+
+   try:
+      configs = [x for x in os.listdir(config_path) if x.endswith('.cfg')]
+   except OSError:   
+      configs = []
+
+   for config in configs:
       print ' -- found config file: {}'.format(config)
       args.extend(['-mergeConfig', os.path.join(config_path, config)])
 
