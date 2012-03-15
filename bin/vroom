@@ -1,15 +1,44 @@
 #!/usr/bin/env python
-#-------------------------------------------------------------------------------
+############################################################
 # NAME: vroom
 #
-# USAGE: vroom [FILENAME]
+# USAGE: vroom [--live ] FILENAME
 #
 # DESCRIPTION:
-# 
-#-------------------------------------------------------------------------------
+#    The vroom environment.
+#
+#    This program is used to run vroom applications. 
+#
+# ARGUMENTS:
+#    FILENAME
+#       The vroom source code
+#
+#    --live
+#       Run the application in live coding mode
+#
+############################################################
 
 import sys
 import os
+import argparse
+
+# Create and initialize the command-line argument pareser
+parser = argparse.ArgumentParser()
+parser.add_argument('--live', dest='live_coding_enabled', action='store_true', default='store_false',
+                        help='enable live coding')
+parser.add_argument('filename', metavar='FILENAME', type=str,
+                        help='vroom application file')
+
+# Parse the command-line arguments
+cl_args = parser.parse_args(sys.argv[1:])
+
+
+# Verify that the vroom source file exists
+if not os.path.exists(cl_args.filename):
+   print('  ERROR: file ({}) does not exist'.format(cl_args.filename))
+   sys.exit(1)
+
+
 import vroom
 
 version = '0.1.1'
@@ -20,20 +49,6 @@ header = r'''
   |___/_/   \____/\____/_/ /_/ /_/
   version {}
 '''
-
-def usage():
-   print('  USAGE: {} [FILENAME]'.format(sys.argv[0]))
-
-try:
-   filename = sys.argv[1]
-except IndexError:
-   usage()
-   sys.exit(1)
-
-if not os.path.exists(filename):
-   print('  ERROR: file ({}) does not exist'.format(filename))
-   sys.exit(1)
-
 
 print header.format(version)
 
@@ -70,14 +85,15 @@ def assign_app_callbacks(mod):
       args.extend(['-mergeConfig', os.path.join(config_path, config)])
 
    print ' -- creating application object'
-   if '--live' in sys.argv:
+   if cl_args.live_coding_enabled:
       vroom._App = vroom.application.LiveCodingApplication(args=args, **func_list)
-      vroom._App.monitor(vroom._App_Path, os.path.basename(filename))
+      vroom._App.monitor(vroom._App_Path, os.path.basename(cl_args.filename))
    else:
       vroom._App = vroom.application.Application(args=args, **func_list)
 
 def main():
-   mod = vroom.load_module(filename)
+
+   mod = vroom.load_module(cl_args.filename)
 
    assign_app_callbacks(mod)
 
@@ -86,3 +102,4 @@ def main():
 
 if __name__ == '__main__':
    main()
+
