@@ -33,7 +33,7 @@ class point_list(list):
          callback(*args, **kwargs)
          popMatrix()
 
-class ResourceNotFound: 
+class ResourceNotFound(Exception): 
    def __init__(self, filename):
       self.filename = filename
 
