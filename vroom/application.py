@@ -19,8 +19,8 @@ def addMainMenuItem(label, callback, type='button'):
    global MainMenuOptions
    MainMenuOptions['items'].append((label, callback, type))
 
-
 class Application(pyvrui.Application, pyvrui.GLObject):
+
 
    class DataItem(pyvrui.DataItem):
       def __init__(self):
@@ -144,12 +144,19 @@ def genTraceback():
     print message
     print "\nFix application source to continue.\n"
 
+class LiveCoding:
+
+   @staticmethod
+   def no_update(func):
+      func.do_not_update = True
+      return func
 
 class LiveCodingApplication(Application):
 
    def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args):
       Application.__init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args)
       self.broken = False
+      self.force_reload = []
 
    def monitor(self, path, filename):
 
@@ -167,18 +174,36 @@ class LiveCodingApplication(Application):
                self.app._display = mod.__dict__['draw']
                self.app.broken = False
 
+               self.app.force_reload = []
+
+               func_exists = lambda x: x in mod.__dict__
+               skip_update = lambda x: getattr(mod.__dict__[x], 'do_not_update', False)
+               do_update = lambda x: func_exists(x) and not skip_update(x)
+
                if 'frame' in mod.__dict__: 
-                  self.app._frame = mod.__dict['frame']
+                  self.app._frame = mod.__dict__['frame']
 
                if 'button_press' in mod.__dict__: 
-                  self.app._button_press = mod.__dict['button_press']
+                  self.app._button_press = mod.__dict__['button_press']
                
                if 'button_release' in mod.__dict__: 
-                  self.app._button_release = mod.__dict['button_release']
+                  self.app._button_release = mod.__dict__['button_release']
 
                if 'motion' in mod.__dict__:
                   self.app._motion = mod.__dict__['motion']
-               
+
+               if do_update('gl_init'):
+                  self.app._gl_init = mod.__dict__['gl_init']
+                  #self.app._gl_init()
+                  self.app.force_reload.append(self.app._gl_init)
+
+               if 'init' in mod.__dict__:
+                  if not getattr(mod.__dict__['init'], 'do_not_update', False):
+                     print ' -- reloading init()'
+                     self.app._init = mod.__dict__['init']
+                     #self.app._init()
+                     self.app.force_reload.append(self.app._init)
+
       print ' -- monitoring path={}'.format(path)
       self.wm = pyinotify.WatchManager()
       self._Notifier = pyinotify.Notifier(self.wm, EventHandler(self, [filename]), timeout=10)
@@ -205,6 +230,9 @@ class LiveCodingApplication(Application):
          return
 
       try:
+         while len(self.force_reload):
+            self.force_reload.pop(0)()
+
          Application.display(self, context)
       except Exception, e:
          print '!' * 60
