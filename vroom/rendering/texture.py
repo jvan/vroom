@@ -5,6 +5,28 @@ except:
 
 from OpenGL.GL import *
 
+import hashlib
+
+class TextureManager:
+
+   def __init__(self):
+      self.cache = { }
+
+   def get_texture(self, data):
+      m = hashlib.md5()
+      m.update(data)
+      key = m.hexdigest()
+      if key in self.cache:
+         print 'Returning cached texture object'
+         return self.cache[key]
+      else:
+         print 'Creating new Texture object'
+         texture = Texture()
+         self.cache[key] = texture
+         return texture
+
+_TextureManager = TextureManager()
+
 class Texture:
 
    def __init__(self):
@@ -26,7 +48,8 @@ class Texture:
    def from_data(ix, iy, image):
       print 'initializing texture from data'
 
-      texture = Texture()
+      #texture = Texture()
+      texture = _TextureManager.get_texture(image)
       texture.bind()
       texture.load(ix, iy, image)
       texture.unbind()
