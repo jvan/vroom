@@ -10,9 +10,11 @@ class PointCloud(GLArray):
       self._sprite_texture = None
 
    def sprite(self, filename):
-      print ' -- initializing point sprite {}'.format(filename)
-
-      self._sprite_texture = Texture.from_file(filename)
+      if filename:
+         print ' -- initializing point sprite {}'.format(filename)
+         self._sprite_texture = Texture.from_file(filename)
+      else:
+         self._sprite_texture = None
 
    def _pre_draw(self):
       GLArray._pre_draw(self)
