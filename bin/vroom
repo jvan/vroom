@@ -24,10 +24,13 @@ import argparse
 
 # Create and initialize the command-line argument pareser
 parser = argparse.ArgumentParser()
-parser.add_argument('--live', dest='live_coding_enabled', action='store_true', default='store_false',
+parser.add_argument('--live', dest='live_coding_enabled', action='store_true', default=False,
                         help='enable live coding')
 parser.add_argument('filename', metavar='FILENAME', type=str,
                         help='vroom application file')
+parser.add_argument('--disable-mods', dest='disable_mods', type=str, nargs='*', default=[],
+                        metavar='MODULE',
+                        help='do not load vroom module(s) when running application')
 
 # Parse the command-line arguments
 cl_args = parser.parse_args(sys.argv[1:])
@@ -37,6 +40,13 @@ cl_args = parser.parse_args(sys.argv[1:])
 if not os.path.exists(cl_args.filename):
    print('  ERROR: file ({}) does not exist'.format(cl_args.filename))
    sys.exit(1)
+
+VroomModules = {
+   'vroom' : [ 'vroom.cfg', 'Default vroom configuration' ],
+   'hydra' : [ 'RazerHydra.cfg', 'Razer Hydra Controller' ]
+}
+
+IgnoreModules = [VroomModules[mod][0] for mod in cl_args.disable_mods]
 
 
 import vroom
@@ -80,8 +90,8 @@ def assign_app_callbacks(mod):
    except OSError:   
       configs = []
 
-   for config in configs:
-      print ' -- found config file: {}'.format(config)
+   for config in [x for x in configs if x not in IgnoreModules]:
+      print ' -- loading module {}'.format(config)
       args.extend(['-mergeConfig', os.path.join(config_path, config)])
 
    print ' -- creating application object'
