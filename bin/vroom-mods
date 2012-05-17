@@ -1,0 +1,139 @@
+#!/usr/bin/env python
+############################################################
+#
+# NAME: vroom-mods
+#
+# USAGE: vroom-mods --enable [MODULE_1, MODULE_2, ... ]
+#        vroom-mods --disable [MODULE_1, MODULE_2, ... ]
+#        vroom-mods [--list] [--list-enabled]
+#
+# DESCRIPTION:
+#    Utility for managing vroom modules.
+#
+############################################################
+
+import os
+import sys
+import argparse
+
+############################################################
+# Command-Line Parser
+#
+#############################################################
+
+parser = argparse.ArgumentParser(prog='vroom-mods')
+
+parser.add_argument('--enable', dest='modules_enable', nargs='*', type=str, default=[],
+      metavar='MODULE', help='enable vroom module(s)')
+
+parser.add_argument('--disable', dest='modules_disable', nargs='*', type=str, default=[],
+      metavar='MODULE', help='disable vroom module(s)')
+
+parser.add_argument('--list', dest='list_modules', action='store_true',
+      help='print all available vroom modules')
+
+parser.add_argument('--list-enabled', dest='list_enabled', action='store_true',
+      help='print currently enabled vroom modules')
+
+args = parser.parse_args(sys.argv[1:])
+
+############################################################
+# Global Variables 
+#
+#############################################################
+
+MODULE_DIRECTORY = '/usr/local/etc/vroom'
+
+VroomModules = {
+   'vroom' : [ 'vroom.cfg', 'Default vroom configuration' ],
+   'hydra' : [ 'RazerHydra.cfg', 'Razer Hydra Controller' ]
+}
+
+############################################################
+# Decorators
+#
+############################################################
+
+def ensure_mod(status):
+   def decorator(func):
+      def wrapper(mod):
+         try:
+            if is_enabled(mod) == status:
+               func(mod)
+            elif status:
+               print ' -- {} module is not enabled'.format(mod)
+            else:
+               print ' -- {} module is already enabled'.format(mod)
+         except KeyError:
+            print 'ERROR: invalid module ({})'.format(mod)
+            sys.exit(1)
+      return wrapper
+   return decorator
+
+def add_banner(title):
+   def decorator(func):
+      def wrapper():
+         print '=' * 60
+         print title
+         print
+         func()
+         print '=' * 60
+      return wrapper
+   return decorator
+
+############################################################
+# Functions
+#
+############################################################
+
+def is_enabled(mod):
+   filename = VroomModules[mod][0]
+   return os.path.exists(os.path.join(MODULE_DIRECTORY, 'mods-enabled', filename))
+
+@ensure_mod(False)
+def enable_module(mod):
+   print ' -- enabling module: {}'.format(mod)
+   (filename, desc) = VroomModules[mod]
+   os.symlink(os.path.join(MODULE_DIRECTORY, 'mods-available', filename),
+              os.path.join(MODULE_DIRECTORY, 'mods-enabled', filename))
+
+@ensure_mod(True)
+def disable_module(mod):
+   print ' -- disabling module: {}'.format(mod)
+   (filename, desc) = VroomModules[mod]
+   os.remove(os.path.join(MODULE_DIRECTORY, 'mods-enabled', filename))
+
+@add_banner('VROOM MODULES')
+def print_modules():
+   for (mod, [file, desc]) in VroomModules.items():
+      print '   {}: {} [{}]'.format(mod, desc, 'enabled' if is_enabled(mod) else 'disabled')
+
+@add_banner('ENABLED MODULES')
+def print_enabled_modules():
+   mods = [mod for mod in VroomModules.keys() if is_enabled(mod)]
+   for mod in mods:
+      print '   {}: {}'.format(mod, VroomModules[mod][1])
+
+############################################################
+# Main Program
+#
+############################################################
+
+def main():
+   if args.list_modules:
+      print_modules()
+      return
+
+   if args.list_enabled:
+      print_enabled_modules()
+      return
+
+   for mod in args.modules_enable:
+      enable_module(mod)
+
+   for mod in args.modules_disable:
+      disable_module(mod)
+
+if __name__ == '__main__':
+   main()
+
