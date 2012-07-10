@@ -21,6 +21,7 @@ def addMainMenuItem(label, callback, type='button'):
 
 class Application(pyvrui.Application, pyvrui.GLObject):
 
+   LocatorCount = 0
 
    class DataItem(pyvrui.DataItem):
       def __init__(self):
@@ -51,6 +52,7 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       toolManager.getToolDestructionCallbacks().add(self.toolDestructionCallback)
 
       #self.locatorTool = None
+      self.locatorTools = []
        
    def initContext(self, contextData):
       dataItem = Application.DataItem() 
@@ -100,34 +102,35 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       self.menu_callbacks[cbData.button.getName()]()
 
    @pyvrui.LocatorTool.ButtonPressCallback
-   def buttonPressCallback(self, data):
+   def buttonPressCallback(self, data, additional_data):
       if self._button_press:
          origin = data.currentTransformation.getTranslation()
          pos = [origin[0], origin[1], origin[2]]
-         self._button_press(pos)
+         self._button_press(pos, additional_data)
 
    @pyvrui.LocatorTool.ButtonReleaseCallback
-   def buttonReleaseCallback(self, data):
+   def buttonReleaseCallback(self, data, additional_data):
       if  self._button_release:
          origin = data.currentTransformation.getTranslation()
          pos = [origin[0], origin[1], origin[2]]
-         self._button_release(pos)
+         self._button_release(pos, additional_data)
          
    @pyvrui.LocatorTool.MotionCallback
-   def motionCallback(self, data):
+   def motionCallback(self, data, additional_data):
       if  self._motion:
          origin = data.currentTransformation.getTranslation()
          pos = [origin[0], origin[1], origin[2]]
-         self._motion(pos)
+         self._motion(pos, additional_data)
 
    @pyvrui.ToolManager.ToolCreationCallback
    def toolCreationCallback(self, data):
       if isinstance(data.tool, pyvrui.LocatorTool):
-         self.locatorTool = data.tool
+         self.locatorTools.append(data.tool)
          # Assign callbacks
-         data.tool.getButtonPressCallbacks().add(self.buttonPressCallback)
-         data.tool.getButtonReleaseCallbacks().add(self.buttonReleaseCallback)
-         data.tool.getMotionCallbacks().add(self.motionCallback)
+         data.tool.getButtonPressCallbacks().add(self.buttonPressCallback, Application.LocatorCount)
+         data.tool.getButtonReleaseCallbacks().add(self.buttonReleaseCallback, Application.LocatorCount)
+         data.tool.getMotionCallbacks().add(self.motionCallback, Application.LocatorCount)
+         Application.LocatorCount += 1
 
    @pyvrui.ToolManager.ToolDestructionCallback
    def toolDestructionCallback(self, data):
