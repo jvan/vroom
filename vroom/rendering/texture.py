@@ -17,10 +17,10 @@ class TextureManager:
       m.update(data)
       key = m.hexdigest()
       if key in self.cache:
-         print 'Returning cached texture object'
+         #print 'Returning cached texture object'
          return self.cache[key]
       else:
-         print 'Creating new Texture object'
+         #print 'Creating new Texture object'
          texture = Texture()
          self.cache[key] = texture
          return texture
@@ -34,7 +34,7 @@ class Texture:
    
    @staticmethod
    def from_file(filename):
-      print 'initializing texture from file'
+      #print 'initializing texture from file'
       image = Image.open(filename)
 
       try:
@@ -46,7 +46,7 @@ class Texture:
 
    @staticmethod
    def from_data(ix, iy, image):
-      print 'initializing texture from data'
+      #print 'initializing texture from data'
 
       #texture = Texture()
       texture = _TextureManager.get_texture(image)
@@ -65,10 +65,12 @@ class Texture:
       glBindTexture(GL_TEXTURE_2D, 0)
 
    def load(self, ix, iy, image):
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)
       glTexImage2D(
-            GL_TEXTURE_2D, 0, 3, ix, iy, 0, 
+            GL_TEXTURE_2D, 0, GL_RGBA, ix, iy, 0, 
             GL_RGBA, GL_UNSIGNED_BYTE, image
       )
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
