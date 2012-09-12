@@ -87,11 +87,12 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       for (label, callback, type) in MainMenuOptions['items']:
          if type == 'button': 
             button = pyvrui.Button(label.lower(), mainMenu, label)
+            button.getSelectCallbacks().add(self.main_menu_callback)
          elif type == 'toggle':
             button = pyvrui.ToggleButton(label.lower(), mainMenu, label)
+            button.getValueChangedCallbacks().add(self.main_menu_toggle_callback)
 
          self.menu_callbacks[button.getName()] = callback
-         button.getSelectCallbacks().add(self.main_menu_callback)
       
       mainMenu.manageChild()
 
@@ -99,7 +100,11 @@ class Application(pyvrui.Application, pyvrui.GLObject):
 
    @pyvrui.Button.SelectCallback
    def main_menu_callback(self, cbData):
-      self.menu_callbacks[cbData.button.getName()]()
+      self.menu_callbacks[cbData.button.getName()](cbData.button)
+
+   @pyvrui.ToggleButton.ValueChangedCallback
+   def main_menu_toggle_callback(self, cbData):
+      self.menu_callbacks[cbData.toggle.getName()](cbData.toggle)
 
    @pyvrui.LocatorTool.ButtonPressCallback
    def buttonPressCallback(self, data, additional_data):
