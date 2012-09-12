@@ -28,25 +28,16 @@ parser.add_argument('--live', dest='live_coding_enabled', action='store_true', d
                         help='enable live coding')
 parser.add_argument('filename', metavar='FILENAME', type=str,
                         help='vroom application file')
-parser.add_argument('--disable-mods', dest='disable_mods', type=str, nargs='*', default=[],
-                        metavar='MODULE',
-                        help='do not load vroom module(s) when running application')
+
+parser.add_argument('program_args', nargs='*', default=[])
 
 # Parse the command-line arguments
 cl_args = parser.parse_args(sys.argv[1:])
-
 
 # Verify that the vroom source file exists
 if not os.path.exists(cl_args.filename):
    print('  ERROR: file ({}) does not exist'.format(cl_args.filename))
    sys.exit(1)
-
-VroomModules = {
-   'vroom' : [ 'vroom.cfg', 'Default vroom configuration' ],
-   'hydra' : [ 'RazerHydra.cfg', 'Razer Hydra Controller' ]
-}
-
-IgnoreModules = [VroomModules[mod][0] for mod in cl_args.disable_mods]
 
 
 import vroom
@@ -96,10 +87,10 @@ def assign_app_callbacks(mod):
 
    print ' -- creating application object'
    if cl_args.live_coding_enabled:
-      vroom._App = vroom.application.LiveCodingApplication(args=args, **func_list)
+      vroom._App = vroom.application.LiveCodingApplication(args=args, program_args=cl_args.program_args, **func_list)
       vroom._App.monitor(vroom._App_Path, os.path.basename(cl_args.filename))
    else:
-      vroom._App = vroom.application.Application(args=args, **func_list)
+      vroom._App = vroom.application.Application(args=args, program_args=cl_args.program_args, **func_list)
 
 def main():
 

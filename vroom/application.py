@@ -27,7 +27,7 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       def __init__(self):
          pyvrui.DataItem.__init__(self)
 
-   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args):
+   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args, program_args):
       pyvrui.Application.__init__(self, sys.argv+args)
       pyvrui.GLObject.__init__(self)
 
@@ -42,7 +42,10 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       self.menu_callbacks = {} 
 
       if self._init:
-         self._init()
+         try:
+            self._init(program_args)
+         except TypeError:
+            self._init()
 
       mainMenu = self.createMainMenu()
       pyvrui.setMainMenu(mainMenu)
