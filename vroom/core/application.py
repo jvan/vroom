@@ -6,8 +6,10 @@ import pyvrui
 from OpenGL.GL import *
 import sys
 import os
-from utils import reload_module
+from utils.module_loader import reload_module
 import pyinotify
+
+from utils.debug import debug, WARNING, ERROR
 
 MainMenuOptions = { 'title': 'vroom', 'items': [] }
 
@@ -42,9 +44,11 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       self.menu_callbacks = {} 
 
       if self._init:
-         try:
+         if program_args:
+            debug(msg='initializing with program args', level=WARNING).flush()
             self._init(program_args)
-         except TypeError:
+         else:
+            debug(msg='initializing without args', level=WARNING).flush()
             self._init()
 
       mainMenu = self.createMainMenu()

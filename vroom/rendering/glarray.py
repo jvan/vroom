@@ -1,7 +1,8 @@
 from OpenGL.GL import *
 from OpenGL.arrays import vbo
-import OpenGL
 import numpy
+
+from vroom.utils.debug import debug, STATUS, DEBUG, VERBOSE
 
 class GLArray:
 
@@ -29,26 +30,26 @@ class GLArray:
       self._render_mode = GL_POINTS
 
    def loadVertexData(self, data, mode='static'):
-      print ' -- loading vertex data'
+      debug(msg='loading vertex data', level=VERBOSE).flush()
       usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
       vertex_data = numpy.array(data, numpy.float32)
       self._vertex_buffer = vbo.VBO(data=vertex_data, usage=usage, target=GL_ARRAY_BUFFER)
       self._num_vertices = len(vertex_data)
    
    def loadColorData(self, data, mode='static'):
-      print ' -- loading color data'
+      debug(msg='loading color data', level=VERBOSE).flush()
       usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
       color_data = numpy.array(data, numpy.float32)
       self._color_buffer = vbo.VBO(data=color_data, usage=usage, target=GL_ARRAY_BUFFER)
 
    def loadNormalData(self, data, mode='static'):
-      print ' -- loading normal data'
+      debug(msg='loading normal data', level=VERBOSE).flush()
       usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
       normal_data = numpy.array(data, numpy.float32)
       self._normal_buffer = vbo.VBO(data=normal_data, usage=usage, target=GL_ARRAY_BUFFER)
 
    def loadIndexData(self, data, mode='static'):
-      print ' -- loading index data'
+      debug(msg='loading index data', level=VERBOSE).flush()
       usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
       index_data = numpy.array(data, numpy.uint32)
       self._index_buffer = vbo.VBO(data=index_data, usage=usage, target=GL_ELEMENT_ARRAY_BUFFER)
@@ -100,7 +101,7 @@ class GLArray:
       if self._index_buffer:
          glDrawElements(self._render_mode, len(self._index_buffer), GL_UNSIGNED_INT, None)
       else:
-         glDrawArrays(self._render_mode, 0, len(self._num_vertices))
+         glDrawArrays(self._render_mode, 0, self._num_vertices)
       self._post_draw()
 
 

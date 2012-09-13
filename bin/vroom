@@ -39,6 +39,9 @@ if not os.path.exists(cl_args.filename):
    print('  ERROR: file ({}) does not exist'.format(cl_args.filename))
    sys.exit(1)
 
+from vroom.utils.debug import Debug, debug, VERBOSE, STATUS
+from vroom.utils.debug import red, green
+Debug.set_level(VERBOSE)
 
 import vroom
 
@@ -51,7 +54,15 @@ header = r'''
   version {}
 '''
 
-print header.format(version)
+
+def print_header():
+   print header.format(version)
+
+def print_callbacks(func_list):
+   success = green('*')
+   fail    = red('X')
+   print '   ' + '\n   '.join('[{}] {}'.format(success if func else fail, name) for name, func in func_list.items())
+   print
 
 def assign_app_callbacks(mod):
    
@@ -65,13 +76,10 @@ def assign_app_callbacks(mod):
    for func in ['init', 'gl_init', 'draw', 'frame', 'button_press', 'button_release', 'motion']:
       func_list.setdefault(func, get_func(func))
 
-   escape  = lambda code: '\033[{}m'.format(code)
-   success = lambda: escape(32) + '*' + escape(0)
-   fail    = lambda: escape(31) + 'X' + escape(0)
+   print_header()
+   print_callbacks(func_list)
 
-   print ' -- assigning callbacks\n'
-   print '   ' + '\n   '.join('[{}] {}'.format(success() if func else fail(), name) for name, func in func_list.items())
-   print  
+   debug(msg='assigning callbacks', level=STATUS).flush()
 
    args = []
    config_path = '/usr/local/etc/vroom/mods-enabled'
@@ -82,10 +90,10 @@ def assign_app_callbacks(mod):
       configs = []
 
    for config in [x for x in configs if x not in IgnoreModules]:
-      print ' -- loading module {}'.format(config)
+      debug(msg='loading module {}'.format(config), level=Debug.STATUS).flush()
       args.extend(['-mergeConfig', os.path.join(config_path, config)])
 
-   print ' -- creating application object'
+   debug(msg='creating application object', level=STATUS).flush()
    if cl_args.live_coding_enabled:
       vroom._App = vroom.application.LiveCodingApplication(args=args, program_args=cl_args.program_args, **func_list)
       vroom._App.monitor(vroom._App_Path, os.path.basename(cl_args.filename))
@@ -98,7 +106,7 @@ def main():
 
    assign_app_callbacks(mod)
 
-   print ' -- lauching application'
+   debug(msg='lauching application', level=STATUS).flush()
    vroom._App.run()
 
 if __name__ == '__main__':

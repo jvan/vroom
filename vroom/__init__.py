@@ -7,6 +7,8 @@ from transform import *
 from rendering import *
 from typography import *
 
+from utils.module_loader import *
+
 _App = None
 _App_Path = None 
 _Module_Name = None
