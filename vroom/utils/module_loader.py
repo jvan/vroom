@@ -1,38 +1,58 @@
+# System imports
+
 import os
 import sys
 import imp
-import vroom
 
-from vroom.utils.debug import debug, STATUS
+# Vroom imports
+
+import vroom.core.environment as env
+
+from debug import *
+
+def _get_module():
+   mod = imp.load_source(env._Module_Name, env._App_Fullpath)
+   return mod
 
 def load_module(filename):
-   app_path = os.path.dirname(filename) 
-   app_path = os.path.abspath(app_path)
+   ''' Load a vroom (python) module.
 
-   vroom._App_Path = app_path
+   This function and the reload_module() function below are used internally by
+   vroom. The application should not need to deal with these functions
+   directly.
+   '''
 
-   debug(msg='setting application path', level=STATUS).flush()
-   vroom._Resource_Paths = [vroom._App_Path, '/usr/local/share/vroom']
+   debug(msg='setting application path').flush()
 
-   vroom._ModuleName = os.path.basename(filename)
-   vroom._ModuleName = os.path.splitext(vroom._ModuleName)[0]
+   # Get the absolute path to the application
+   env._App_Fullpath = os.path.abspath(filename)
 
-   debug(msg='importing {} application'.format(vroom._ModuleName), level=STATUS).flush()
+   # Get the path to the application's root directory. This path is used when
+   # when (re)loading the module and when searching for resources.
+   env._App_Path = os.path.dirname(env._App_Fullpath)
+
+   debug(level=VERBOSE, indent=1).add('_App_Path', env._App_Path).flush()
+   debug(level=VERBOSE, indent=1).add('_App_Fullpath', env._App_Fullpath).flush()
+
+   # Set the directories used when searching for resources
+   env._Resource_Paths = [env._App_Path, '/usr/local/share/vroom']
+
+   # Get the name of the module (basename without file extension)
+   env._Module_Name = os.path.basename(filename)
+   env._Module_Name = os.path.splitext(env._Module_Name)[0]
+
+   debug(msg='importing {} application'.format(env._Module_Name)).flush()
 
    try:
-      fp, pathname, description = imp.find_module(vroom._ModuleName, [vroom._App_Path])
-      mod = imp.load_module(vroom._ModuleName, fp, pathname, description)
-      fp.close()
+      mod = _get_module()
    except ImportError:
-      print 'ERROR: could not import module {}'.format(vroom._ModuleName)
+      debug(msg='could not import module {}'.format(env._Module_Name), level=ERROR).flush()
       sys.exit(1)
 
    return mod
 
 def reload_module():
-   debug(msg='reloading {} module'.format(vroom._ModuleName), level=STATUS).flush()
-   fp, pathname, description = imp.find_module(vroom._ModuleName, [vroom._App_Path])
-   mod = imp.load_module(vroom._ModuleName, fp, pathname, description)
-   fp.close()
-   return mod
+   ''' Reload the current vroom (python) module.'''
+
+   return _get_module()
 
