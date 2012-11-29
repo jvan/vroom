@@ -4,19 +4,26 @@ import numpy
 
 from vroom.utils.debug import debug, STATUS, DEBUG, VERBOSE
 
-class GLArray:
+class Buffer:
 
    RenderModes = { 
-      'lines': GL_LINES,
-      'triangles': GL_TRIANGLES 
+      'points':          GL_POINTS,
+      'lines':           GL_LINES,
+      'lines:strip':     GL_LINE_STRIP,
+      'lines:loop':      GL_LINE_LOOP,
+      'triangles':       GL_TRIANGLES,
+      'triangles:strip': GL_TRIANGLE_STRIP,
+      'triangles:fan':   GL_TRIANGLE_FAN
       }
 
    def __init__(self, vertex_data=None, color_data=None, normal_data=None, index_data=None):
 
       self._vertex_buffer = None
       self._color_buffer = None
-      self._index_buffer = None
       self._normal_buffer = None
+      self._index_buffer = None
+      
+      self._index_buffers = []
 
       if vertex_data != None:
          self.loadVertexData(vertex_data)
@@ -56,7 +63,7 @@ class GLArray:
 
    def renderMode(self, mode):
       if isinstance(mode, str):
-         self._render_mode = GLArray.RenderModes[mode]
+         self._render_mode = Buffer.RenderModes[mode]
       else:
          self._render_mode = mode
 
@@ -96,12 +103,68 @@ class GLArray:
       if self._index_buffer:
          self._index_buffer.unbind()
 
-   def draw(self):
+   def draw(self, **kwargs):
+      style = kwargs.get('style', 'wireframe')
+
+      glPushAttrib(GL_POLYGON_BIT)
+      if style == 'wireframe':
+         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+
       self._pre_draw()
+
       if self._index_buffer:
          glDrawElements(self._render_mode, len(self._index_buffer), GL_UNSIGNED_INT, None)
       else:
          glDrawArrays(self._render_mode, 0, self._num_vertices)
+
       self._post_draw()
 
+      glPopAttrib()
+
+class IndexedBuffer(Buffer):
+
+   class Patch:
+      def __init__(self, ibo, mode):
+         self.ibo = ibo
+         self.mode = mode
+      def draw(self):
+         self.ibo.bind()
+         glDrawElements(self.mode, len(self.ibo), GL_UNSIGNED_INT, None)
+         self.ibo.unbind()
+
+   def __init__(self, vertex_data=None, color_data=None, normal_data=None):
+      Buffer.__init__(self, vertex_data, color_data, normal_data)
+      self._index_buffers = []
+
+   def addIndexData(self, data, mode):
+      debug(msg='loading index data', level=VERBOSE).flush()
+      index_data = numpy.array(data, numpy.uint32)
+      ibo = vbo.VBO(data=index_data, usage=GL_STATIC_DRAW, target=GL_ELEMENT_ARRAY_BUFFER)
+      self._index_buffers.append([ibo, Buffer.RenderModes[mode]])
+
+   def patches(self):
+      return [IndexedBuffer.Patch(ibo, mode) for (ibo, mode) in self._index_buffers]
+
+   def draw(self, **kwargs):
+      style = kwargs.get('style', 'wireframe')
+
+      glPushAttrib(GL_POLYGON_BIT)
+      if style == 'wireframe':
+         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)
+
+      self._pre_draw()
+
+      for ibo, mode in self._index_buffers:
+         ibo.bind()
+         glDrawElements(mode, len(ibo), GL_UNSIGNED_INT, None)
+         ibo.unbind()
+
+      self._post_draw()
+
+      glPopAttrib()
+
+   def batch_render(self, func):
+      self._pre_draw()
+      func()
+      self._post_draw()
 
