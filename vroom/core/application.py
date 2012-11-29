@@ -6,10 +6,10 @@ import pyvrui
 from OpenGL.GL import *
 import sys
 import os
-from utils.module_loader import reload_module
 import pyinotify
 
-from utils.debug import debug, WARNING, ERROR
+from vroom.utils.module_loader import reload_module
+from vroom.utils.debug import debug, WARNING, ERROR
 
 MainMenuOptions = { 'title': 'vroom', 'items': [] }
 
@@ -29,7 +29,10 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       def __init__(self):
          pyvrui.DataItem.__init__(self)
 
-   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args, program_args):
+   def __init__(self, init, gl_init, draw, frame, 
+                button_press, button_release, motion, 
+                communicate,
+                args, program_args):
       pyvrui.Application.__init__(self, sys.argv+args)
       pyvrui.GLObject.__init__(self)
 
@@ -40,6 +43,7 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       self._button_press = button_press
       self._button_release = button_release
       self._motion = motion
+      self._communicate = communicate
 
       self.menu_callbacks = {} 
 
@@ -84,6 +88,10 @@ class Application(pyvrui.Application, pyvrui.GLObject):
 
       self._frame()
       pyvrui.requestUpdate()
+
+   def communicate(self, message):
+      if self._communicate:
+         self._communicate(message)
 
    def createMainMenu(self):
       widgetManager = pyvrui.getWidgetManager()
@@ -168,12 +176,13 @@ class LiveCoding:
 
 class LiveCodingApplication(Application):
 
-   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args):
-      Application.__init__(self, init, gl_init, draw, frame, button_press, button_release, motion, args)
+   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, communicate, args, program_args):
+      Application.__init__(self, init, gl_init, draw, frame, button_press, button_release, motion, communicate, args, program_args)
       self.broken = False
       self.force_reload = []
 
    def monitor(self, path, filename):
+      debug().add('path', path).flush()
 
       class EventHandler(pyinotify.ProcessEvent):
          def __init__(self, app, files):
@@ -219,7 +228,6 @@ class LiveCodingApplication(Application):
                      #self.app._init()
                      self.app.force_reload.append(self.app._init)
 
-      print ' -- monitoring path={}'.format(path)
       self.wm = pyinotify.WatchManager()
       self._Notifier = pyinotify.Notifier(self.wm, EventHandler(self, [filename]), timeout=10)
       self.wm.add_watch(path, pyinotify.IN_CLOSE_WRITE)

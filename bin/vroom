@@ -22,6 +22,12 @@ import sys
 import os
 import argparse
 
+
+sys.dont_write_bytecode = True
+
+from vroom.utils.debug import *
+Debug.set_level(DEBUG)
+
 # Create and initialize the command-line argument pareser
 parser = argparse.ArgumentParser()
 parser.add_argument('--live', dest='live_coding_enabled', action='store_true', default=False,
@@ -39,11 +45,13 @@ if not os.path.exists(cl_args.filename):
    print('  ERROR: file ({}) does not exist'.format(cl_args.filename))
    sys.exit(1)
 
-from vroom.utils.debug import Debug, debug, VERBOSE, STATUS
-from vroom.utils.debug import red, green
-Debug.set_level(VERBOSE)
 
-import vroom
+from vroom.core.application import Application, LiveCodingApplication
+from vroom.core.data_stream import MessageListener
+from vroom.utils.module_loader import load_module
+import vroom.core.environment as env
+
+import vroom.utils.debug
 
 version = '0.1.2'
 header = r''' 
@@ -59,8 +67,8 @@ def print_header():
    print header.format(version)
 
 def print_callbacks(func_list):
-   success = green('*')
-   fail    = red('X')
+   success = vroom.utils.debug.green('*')
+   fail    = vroom.utils.debug.red('X')
    print '   ' + '\n   '.join('[{}] {}'.format(success if func else fail, name) for name, func in func_list.items())
    print
 
@@ -73,13 +81,18 @@ def assign_app_callbacks(mod):
          return None
 
    func_list = { }
-   for func in ['init', 'gl_init', 'draw', 'frame', 'button_press', 'button_release', 'motion']:
+   functions = ['init', 'gl_init', 'draw', 'frame']
+   functions.extend(['button_press', 'button_release', 'motion'])
+   functions.extend(['communicate'])
+   for func in functions:
       func_list.setdefault(func, get_func(func))
+
+
 
    print_header()
    print_callbacks(func_list)
 
-   debug(msg='assigning callbacks', level=STATUS).flush()
+   debug(msg='assigning callbacks').flush()
 
    args = []
    config_path = '/usr/local/etc/vroom/mods-enabled'
@@ -89,25 +102,37 @@ def assign_app_callbacks(mod):
    except OSError:   
       configs = []
 
-   for config in [x for x in configs if x not in IgnoreModules]:
-      debug(msg='loading module {}'.format(config), level=Debug.STATUS).flush()
+   for config in configs:
+      debug(msg='loading module {}'.format(config)).flush()
       args.extend(['-mergeConfig', os.path.join(config_path, config)])
 
-   debug(msg='creating application object', level=STATUS).flush()
+   debug(msg='creating application object').flush()
    if cl_args.live_coding_enabled:
-      vroom._App = vroom.application.LiveCodingApplication(args=args, program_args=cl_args.program_args, **func_list)
-      vroom._App.monitor(vroom._App_Path, os.path.basename(cl_args.filename))
+      env._App = LiveCodingApplication(args=args, program_args=cl_args.program_args, **func_list)
+      env._App.monitor(env._App_Path, os.path.basename(cl_args.filename))
    else:
-      vroom._App = vroom.application.Application(args=args, program_args=cl_args.program_args, **func_list)
+      env._App = Application(args=args, program_args=cl_args.program_args, **func_list)
+
+   if func_list['communicate']:
+      env._Listener = MessageListener(env._App.communicate)
+      env._Listener.start()
 
 def main():
 
-   mod = vroom.load_module(cl_args.filename)
+   mod = load_module(cl_args.filename)
 
    assign_app_callbacks(mod)
 
-   debug(msg='lauching application', level=STATUS).flush()
-   vroom._App.run()
+   debug(msg='lauching application').flush()
+
+   try:
+      env._App.run()
+   except KeyboardInterrupt:
+      if env._Listener:
+         env._Listener.stop()
+
+   if env._Listener:
+      env._Listener.stop()
 
 if __name__ == '__main__':
    main()
