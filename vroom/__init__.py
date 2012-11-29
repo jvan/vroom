@@ -1,75 +1,46 @@
-from application import *
-from utils import *
-from environment import *
-from color import *
-from lighting import *
-from transform import *
-from rendering import *
-from typography import *
+from OpenGL.GL import *
+from random import random
 
-from utils.module_loader import *
+from core.application import Application, LiveCodingApplication
+from core.application import LiveCoding
+from core.application import setMainMenuTitle, addMainMenuItem
 
-_App = None
-_App_Path = None 
-_Module_Name = None
-_Resource_Paths = None
+from core.environment import pushMatrix, popMatrix
+from core.environment import lineWidth, pointSize
+from core.environment import elapsedTime
+from core.environment import Global
 
-pushMatrix = glPushMatrix
-popMatrix = glPopMatrix
-pointSize = glPointSize
-lineWidth = glLineWidth
+from core.data_stream import stream_data, stream_command
 
-red   = [1.0, 0.0, 0.0]
-green = [0.0, 1.0, 0.0]
-blue  = [0.0, 0.0, 1.0]
+from core.datatypes import BooleanOption
 
+from core.color import color
+from core.color import red, green, blue, black, white
+from core.color import ColorMap
 
-class _Global: pass
-Global = _Global()
+from core.lighting import lighting, transparency, material
 
-class point_list(list):
-   def for_each(self, callback, *args, **kwargs):
-      for point in self:
-         pushMatrix()
-         translate(point)
-         callback(*args, **kwargs)
-         popMatrix()
+from core.transform import rotate, rotateX, rotateY, rotateZ
+from core.transform import translate, translateX, translateY, translateZ
+from core.transform import scale
+#from core.transform import centerDisplay
+from core.transform import center
 
-class ResourceNotFound(Exception): 
-   def __init__(self, filename):
-      self.filename = filename
+from core.typography import text, textFont, textSize
 
-def  get_resource(filename):
+from utils.resources import get_resource
+from utils.generators import random_vertex_generator, random_color_generator
+from utils.generators import random_vertex, random_color
 
-   print ' -- searching for resource {}'.format(filename)
+from rendering.cube import cube
+from rendering.sphere import sphere, sphereDetail
+from rendering.cylinder import cylinder
+from rendering.disk import disk
+from rendering.grid import grid
+from rendering.axes import axes
+from rendering.batch_mode import point_list
+from rendering.texture import Texture
+from rendering.buffers import Buffer, IndexedBuffer
+from rendering.point_cloud import PointCloud
+from rendering.mesh import Mesh
 
-   # Check for the file in the application's data directory
-   path = os.path.join(_Resource_Paths[0], 'data', filename)
-   if os.path.exists(path):
-      print ' -- found application resource {}'.format(path)
-      return path
-
-   # Check for the file in the global vroom resource dir
-   path = os.path.join(_Resource_Paths[1], 'data', filename)
-   if os.path.exists(path):
-      print ' -- found global resource {}'.format(path)
-      return path
-
-   #return os.path.join(_App_Path, 'data', filename)
-   raise ResourceNotFound(filename)
-
-from random import random, randrange
-
-def random_vertex(start, stop):
-   return [randrange(start, stop) for i in range(3)] 
-
-def random_color():
-   return [random() for i in range(3)]
-
-def random_vertex_generator(n, start=-1.0, stop=1.0):
-   for i in range(n):
-      yield random_vertex(start, stop)
-
-def random_color_generator(n):
-   for i in range(n):
-      yield random_color()
