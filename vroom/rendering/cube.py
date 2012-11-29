@@ -1,9 +1,15 @@
+# System imports
+
 from OpenGL.GL import *
 from OpenGL.arrays import vbo
+
 import numpy
 
+# Vroom imports
+
+from vroom.core.transform import scale
+
 from batch_mode import EnableBatchMode
-from vroom.transform import scale
 
 class Cube:
 

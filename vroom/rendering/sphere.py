@@ -1,4 +1,8 @@
+# System imports
+
 from OpenGL.GLU import gluSphere, gluQuadricTexture
+
+# Vroom imports
 
 from batch_mode import EnableBatchMode
 from quadric import _get_quadric, _set_draw_style
@@ -6,31 +10,30 @@ from settings import SphereRes
 
 @EnableBatchMode
 def sphere(radius, **kwargs):
+   ''' Draw a sphere with the given radius.'''
+
+   # Get any keyword arguments
+   style = kwargs.get('style', 'wireframe')
+   texture = kwargs.get('texture', None)
 
    quadric = _get_quadric()
 
-   texture = kwargs.get('texture', None)
-   style = kwargs.get('style', 'wireframe')
-
-   #if style == 'wireframe':
-      #glutWireSphere(radius, SphereRes['slices'], SphereRes['stacks'])
-   #elif style == 'solid':
-      #glutSolidSphere(radius, SphereRes['slices'], SphereRes['stacks'])
-   #else:
-      #raise Exception('vroom.cube: invalid style value')
-   
+   # Setup texture if specified
    if texture:
       style = 'solid'
       gluQuadricTexture(quadric, True)
       texture.bind()
-   else:
-      gluQuadricTexture(quadric, False)
+   
+   # Setup the quadric draw style (line or fill)
    _set_draw_style(style)
 
+   # Draw the sphere
    gluSphere(quadric, radius, SphereRes['slices'], SphereRes['stacks'])
 
+   # Clean up texture data if specified
    if texture:
       texture.unbind()
+      gluQuadricTexture(quadric, False)
 
 def sphereDetail(*args):
    ''' Adjust resolution of sphere.
@@ -45,5 +48,4 @@ def sphereDetail(*args):
    else:
       SphereRes['slices'] = args[0]
       SphereRes['stacks'] = args[1]
-
 
