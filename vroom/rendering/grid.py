@@ -1,9 +1,15 @@
-from OpenGL.GL import GL_LINES
-from vroom.utils.debug import debug
+# System imports
 
-from glarray import GLArray
+from OpenGL.GL import GL_LINES
+
+# vroom imports
+
+from vroom.utils.debug import *
+
+from buffers import Buffer
 
 class Grid:
+
    def __init__(self):
       self.x = None
       self.y = None
@@ -49,3 +55,4 @@ class Grid:
       self.buffer.renderMode(GL_LINES)
 
 grid = Grid()
+
