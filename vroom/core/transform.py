@@ -1,5 +1,12 @@
+# System imports
+
 from OpenGL.GL import glRotatef, glTranslate, glScale
+import numpy
 import pyvrui
+
+# Vroom imports
+
+from vroom.utils.debug import *
 
 class Vector:
    def __init__(self, x=0.0, y=0.0, z=0.0):
@@ -95,4 +102,8 @@ def centerDisplay():
    t = t * Vrui.NavTransform.translateFromOriginTo(Vrui.getDisplayCenter())
    t = t * Vrui.NavTransform.scale(Vrui.getInchFactor())
    Vrui.setNavigationTransformation(t)
+
+def center(points):
+   c = numpy.array(points).sum(0) / -len(points)
+   return list(c)
 
