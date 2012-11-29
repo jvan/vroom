@@ -1,6 +1,12 @@
+# System imports
+
 from OpenGL.GLU import gluNewQuadric, gluQuadricDrawStyle, GLU_LINE, GLU_FILL
 
-_Quadric = None
+# These functions and variables are used internally by vroom when rendering
+# certain geometric shapes (sphere, cylinder, etc.). Generally they should not
+# be used directly by the application.
+
+_Quadric = None # global quadric object
 
 def _get_quadric():
    global _Quadric
