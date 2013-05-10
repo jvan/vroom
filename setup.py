@@ -13,7 +13,7 @@ setup (
    author_email = 'jvan@cse.ucdavis.edu',
    url = 'http://iviz.csc.ucdavis.edu/vroom',
    description = 'Rapid development environment for virtual reality applications.',
-   packages = ['vroom', 'vroom.rendering'],
+   packages = ['vroom', 'vroom.core', 'vroom.rendering', 'vroom.utils', 'vroom.extra', 'vroom.extra.PLY'],
    scripts = ['bin/vroom'],
    requires = ['pyftgl', 'pyinotify', 'pyopengl', 'numpy']
    )
