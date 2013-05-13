@@ -8,10 +8,14 @@ import sys
 import os
 import pyinotify
 
+from tracking import _Tracker
+
 from vroom.utils.module_loader import reload_module
 from vroom.utils.debug import debug, WARNING, ERROR
 
 MainMenuOptions = { 'title': 'vroom', 'items': [] }
+
+from time import time
 
 def setMainMenuTitle(title):
    global MainMenuOptions
@@ -29,7 +33,7 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       def __init__(self):
          pyvrui.DataItem.__init__(self)
 
-   def __init__(self, init, gl_init, draw, frame, 
+   def __init__(self, init, gl_init, display, frame, 
                 button_press, button_release, motion, 
                 communicate,
                 args, program_args):
@@ -38,7 +42,7 @@ class Application(pyvrui.Application, pyvrui.GLObject):
 
       self._init = init
       self._gl_init = gl_init
-      self._display = draw
+      self._display = display
       self._frame = frame
       self._button_press = button_press
       self._button_release = button_release
@@ -64,6 +68,8 @@ class Application(pyvrui.Application, pyvrui.GLObject):
 
       #self.locatorTool = None
       self.locatorTools = []
+
+      self.frame_count = 0
        
    def initContext(self, contextData):
       dataItem = Application.DataItem() 
@@ -82,12 +88,18 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       self._display()
       glPopAttrib()
 
-   def frame(self):
-      if not self._frame:
-         return
+      glPushAttrib(GL_LIGHTING_BIT)
+      glDisable(GL_LIGHTING)
+      if _Tracker.debugging:
+         _Tracker.draw()
+      glPopAttrib()
 
-      self._frame()
-      pyvrui.requestUpdate()
+   def frame(self):
+      if self._frame:
+         self._frame()
+         pyvrui.requestUpdate()
+
+      self.frame_count += 1
 
    def communicate(self, message):
       if self._communicate:
@@ -123,13 +135,18 @@ class Application(pyvrui.Application, pyvrui.GLObject):
 
    @pyvrui.LocatorTool.ButtonPressCallback
    def buttonPressCallback(self, data, additional_data):
+      origin = data.currentTransformation.getTranslation()
+      pos = [origin[0], origin[1], origin[2]]
+   
+      _Tracker.check_for_collision(pos)
+
       if self._button_press:
-         origin = data.currentTransformation.getTranslation()
-         pos = [origin[0], origin[1], origin[2]]
          self._button_press(pos, additional_data)
 
    @pyvrui.LocatorTool.ButtonReleaseCallback
    def buttonReleaseCallback(self, data, additional_data):
+      _Tracker.release()
+
       if  self._button_release:
          origin = data.currentTransformation.getTranslation()
          pos = [origin[0], origin[1], origin[2]]
@@ -137,9 +154,13 @@ class Application(pyvrui.Application, pyvrui.GLObject):
          
    @pyvrui.LocatorTool.MotionCallback
    def motionCallback(self, data, additional_data):
+      origin = data.currentTransformation.getTranslation()
+      pos = [origin[0], origin[1], origin[2]]
+
+      if _Tracker.dragging:
+         _Tracker.move_active(pos)
+
       if  self._motion:
-         origin = data.currentTransformation.getTranslation()
-         pos = [origin[0], origin[1], origin[2]]
          self._motion(pos, additional_data)
 
    @pyvrui.ToolManager.ToolCreationCallback
@@ -176,8 +197,8 @@ class LiveCoding:
 
 class LiveCodingApplication(Application):
 
-   def __init__(self, init, gl_init, draw, frame, button_press, button_release, motion, communicate, args, program_args):
-      Application.__init__(self, init, gl_init, draw, frame, button_press, button_release, motion, communicate, args, program_args)
+   def __init__(self, init, gl_init, display, frame, button_press, button_release, motion, communicate, args, program_args):
+      Application.__init__(self, init, gl_init, display, frame, button_press, button_release, motion, communicate, args, program_args)
       self.broken = False
       self.force_reload = []
 
@@ -195,7 +216,7 @@ class LiveCodingApplication(Application):
             print ' !! processing event {}, {}'.format(event.path, event.name)
             if event.name in self.watch_list:
                mod = reload_module() 
-               self.app._display = mod.__dict__['draw']
+               self.app._display = mod.__dict__['display']
                self.app.broken = False
 
                self.app.force_reload = []
@@ -223,7 +244,6 @@ class LiveCodingApplication(Application):
 
                if 'init' in mod.__dict__:
                   if not getattr(mod.__dict__['init'], 'do_not_update', False):
-                     print ' -- reloading init()'
                      self.app._init = mod.__dict__['init']
                      #self.app._init()
                      self.app.force_reload.append(self.app._init)
@@ -239,6 +259,9 @@ class LiveCodingApplication(Application):
          while self._Notifier.check_events():
             self._Notifier.read_events()
             self._Notifier.process_events()
+
+         while len(self.force_reload):
+            self.force_reload.pop(0)()
 
       except Exception, e:
          print 'LiveCodingApplication.frame: error reloading module'
@@ -265,3 +288,4 @@ class LiveCodingApplication(Application):
          print '!' * 60
 
          self.broken = True
+
