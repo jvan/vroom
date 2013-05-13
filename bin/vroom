@@ -81,7 +81,7 @@ def assign_app_callbacks(mod):
          return None
 
    func_list = { }
-   functions = ['init', 'gl_init', 'draw', 'frame']
+   functions = ['init', 'gl_init', 'display', 'frame']
    functions.extend(['button_press', 'button_release', 'motion'])
    functions.extend(['communicate'])
    for func in functions:
