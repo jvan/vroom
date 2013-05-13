@@ -39,10 +39,10 @@ class TextureManager:
       # If the texture data already exists return the existing texture object. 
       # Otherwise create a new texture object and store it in the cache.
       if key in self.cache:
-         debug(msg='Returning cached texture object', level=VERBOSE).flush()
+         #debug(msg='Returning cached texture object', level=VERBOSE).flush()
          return self.cache[key]
 
-      debug(msg='Creating new Texture object', level=VERBOSE).flush()
+      #debug(msg='Creating new Texture object', level=VERBOSE).flush()
       texture = Texture()
       self.cache[key] = texture
       return texture
@@ -64,8 +64,8 @@ class Texture:
 
    @staticmethod
    def from_file(filename):
-      debug(msg='initializing texture from file', level=STATUS).flush()
-      debug(level=VERBOSE, indent=1).add('filename', filename).flush()
+      #debug(msg='initializing texture from file', level=STATUS).flush()
+      #debug(level=VERBOSE, indent=1).add('filename', filename).flush()
 
       image = Image.open(filename)
 
@@ -78,7 +78,7 @@ class Texture:
 
    @staticmethod
    def from_data(ix, iy, image):
-      debug(msg='initializing texture from data', level=VERBOSE).flush()
+      #debug(msg='initializing texture from data', level=VERBOSE).flush()
       texture = _TextureManager.get_texture(image)
       texture.load(ix, iy, image)
       return texture

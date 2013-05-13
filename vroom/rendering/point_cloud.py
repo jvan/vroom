@@ -20,6 +20,7 @@ class PointCloud(Buffer):
 
    def __init__(self, vertex_data=None, color_data=None):
       Buffer.__init__(self, vertex_data, color_data)
+
       self._sprite_texture = None
       self._point_size = 1.0
       self._point_sprite_size = 15.0
@@ -35,10 +36,10 @@ class PointCloud(Buffer):
       '''
 
       if filename:
-         debug(msg='initializing point sprite').add('filename', filename).flush()
+         #debug(msg='initializing point sprite').add('filename', filename).flush()
          self._sprite_texture = Texture.from_file(filename)
       else:
-         debug(msg='point sprite rendering disabled').flush()
+         #debug(msg='point sprite rendering disabled').flush()
          self._sprite_texture = None
 
    def pointSize(self, size):

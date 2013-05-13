@@ -24,7 +24,6 @@ def material(*args):
    glMaterialfv(GL_FRONT, GL_SPECULAR, [1.0,1.0,1.0,1.0])
    glMaterialfv(GL_FRONT, GL_SHININESS, 50.0)
 
-
 def transparency(enable):
    if enable:
       glEnable(GL_BLEND)
