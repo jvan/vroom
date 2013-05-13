@@ -72,3 +72,32 @@ class point_list(list):
          callback(*args, **kwargs)
          glPopMatrix()
 
+
+class NewBatchRender:
+   def __init__(self, f, *args, **kwargs):
+      self.func = f
+      self.args = args
+      self.kwargs = kwargs
+      self._triggered = False
+
+   def __del__(self):
+      if not self._triggered:
+         self._func(*self.args, **self.kwargs)
+
+   def for_each(self, points):
+      for pos in points:
+         glPushMatrix()
+         translate(pos)
+         self.func(*self.args, **self.kwargs)
+         glPopMatrix()
+      self._triggered = True
+
+   def at(self, point):
+      glPushMatrix()
+      translate(point)
+      self.func(*self.args, **self.kwargs)
+      glPopMatrix()
+      self._triggered = True
+
+def draw(func, *args, **kwargs):
+   return NewBatchRender(func, *args, **kwargs)
