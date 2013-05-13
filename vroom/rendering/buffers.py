@@ -2,7 +2,14 @@ from OpenGL.GL import *
 from OpenGL.arrays import vbo
 import numpy
 
+from vroom.core.environment import pushMatrix, popMatrix
+from vroom.core.transform import translate
+
+from vroom.core.tracking import add_tracked_object, compute_bounding_region
+
 from vroom.utils.debug import debug, STATUS, DEBUG, VERBOSE
+
+from time import time
 
 class Buffer:
 
@@ -15,6 +22,23 @@ class Buffer:
       'triangles:strip': GL_TRIANGLE_STRIP,
       'triangles:fan':   GL_TRIANGLE_FAN
       }
+
+   UsageModes = {
+      'static':       GL_STATIC_DRAW,
+      'static:draw':  GL_STATIC_DRAW,
+      'static:read':  GL_STATIC_READ,
+      'static:copy':  GL_STATIC_COPY,
+      'dynamic':      GL_DYNAMIC_DRAW,
+      'dynamic:draw': GL_DYNAMIC_DRAW,
+      'dynamic:read': GL_DYNAMIC_READ,
+      'dynamic:copy': GL_DYNAMIC_COPY,
+      'stream':       GL_STREAM_DRAW,
+      'stream:draw':  GL_STREAM_DRAW,
+      'stream:read':  GL_STREAM_READ,  
+      'stream:copy':  GL_STREAM_COPY
+   }
+
+   DType = numpy.float32
 
    def __init__(self, vertex_data=None, color_data=None, normal_data=None, index_data=None):
 
@@ -36,27 +60,41 @@ class Buffer:
    
       self._render_mode = GL_POINTS
 
+      self.origin = [0.0, 0.0, 0.0]
+
    def loadVertexData(self, data, mode='static'):
-      debug(msg='loading vertex data', level=VERBOSE).flush()
-      usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
-      vertex_data = numpy.array(data, numpy.float32)
+      #debug(msg='loading vertex data', level=VERBOSE).flush()
+      #usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
+      usage = Buffer.UsageModes[mode]
+      vertex_data = numpy.array(data, Buffer.DType)
       self._vertex_buffer = vbo.VBO(data=vertex_data, usage=usage, target=GL_ARRAY_BUFFER)
+      #self._num_vertices = len(vertex_data)/3
       self._num_vertices = len(vertex_data)
-   
+
+   def updateVertexData(self, data):
+      start = time()
+      vertex_data = numpy.array(data, Buffer.DType)
+      print('\t -- convert: {} (s)'.format(time()-start))
+      start =time()
+      self._vertex_buffer.set_array(vertex_data)
+      print('\t -- upload: {} (s)'.format(time()-start))
+      #self._vertex_buffer.set_array(data)
+
    def loadColorData(self, data, mode='static'):
-      debug(msg='loading color data', level=VERBOSE).flush()
-      usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
-      color_data = numpy.array(data, numpy.float32)
+      #debug(msg='loading color data', level=VERBOSE).flush()
+      #usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
+      usage = Buffer.UsageModes[mode]
+      color_data = numpy.array(data, Buffer.DType)
       self._color_buffer = vbo.VBO(data=color_data, usage=usage, target=GL_ARRAY_BUFFER)
 
    def loadNormalData(self, data, mode='static'):
-      debug(msg='loading normal data', level=VERBOSE).flush()
+      #debug(msg='loading normal data', level=VERBOSE).flush()
       usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
-      normal_data = numpy.array(data, numpy.float32)
+      normal_data = numpy.array(data, Buffer.DType)
       self._normal_buffer = vbo.VBO(data=normal_data, usage=usage, target=GL_ARRAY_BUFFER)
 
    def loadIndexData(self, data, mode='static'):
-      debug(msg='loading index data', level=VERBOSE).flush()
+      #debug(msg='loading index data', level=VERBOSE).flush()
       usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
       index_data = numpy.array(data, numpy.uint32)
       self._index_buffer = vbo.VBO(data=index_data, usage=usage, target=GL_ELEMENT_ARRAY_BUFFER)
@@ -112,14 +150,51 @@ class Buffer:
 
       self._pre_draw()
 
+      pushMatrix()
+      translate(self.origin)
+
       if self._index_buffer:
          glDrawElements(self._render_mode, len(self._index_buffer), GL_UNSIGNED_INT, None)
       else:
          glDrawArrays(self._render_mode, 0, self._num_vertices)
 
+      popMatrix()
+
       self._post_draw()
 
       glPopAttrib()
+
+   def enable_tracking(self, **kwargs):
+      debug().flush()
+      cache = kwargs.get('cache', None)
+      if cache:
+         debug(msg='loading bounding region from cache')
+      else:
+         self.region = compute_bounding_region(self._vertex_buffer)
+         debug(indent=1).add('region', self.region).flush()
+         debug(indent=1).add('region.center', self.region.center()).flush()
+         add_tracked_object(self)
+
+   def move_to(self, position):
+      debug().add('position', position)
+
+      dx = position[0] - self.origin[0]
+      dy = position[1] - self.origin[1]
+      dz = position[2] - self.origin[2]
+
+      self.origin = position
+
+      if not hasattr(self, 'region'):
+         return
+
+      self.region.bounds['x'].min += dx 
+      self.region.bounds['x'].max += dx 
+
+      self.region.bounds['y'].min += dy 
+      self.region.bounds['y'].max += dy 
+
+      self.region.bounds['z'].min += dz 
+      self.region.bounds['z'].max += dz 
 
 class IndexedBuffer(Buffer):
 
@@ -137,7 +212,7 @@ class IndexedBuffer(Buffer):
       self._index_buffers = []
 
    def addIndexData(self, data, mode):
-      debug(msg='loading index data', level=VERBOSE).flush()
+      #debug(msg='loading index data', level=VERBOSE).flush()
       index_data = numpy.array(data, numpy.uint32)
       ibo = vbo.VBO(data=index_data, usage=GL_STATIC_DRAW, target=GL_ELEMENT_ARRAY_BUFFER)
       self._index_buffers.append([ibo, Buffer.RenderModes[mode]])
