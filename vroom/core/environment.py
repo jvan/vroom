@@ -21,6 +21,18 @@ _Resource_Paths = None  # system resource directories
 
 _Listener       = None
 
-class _Global: pass
+class _Global:
+   
+   def require(self, attr):
+      def decorator(f):
+         def wrapped(*args, **kwargs):
+            if not getattr(Global, attr, False):
+               return
+            f(*args, **kwargs)
+         return wrapped
+      return decorator
+
 Global = _Global()
 
+def currentFrame():
+   return _App.frame_count
