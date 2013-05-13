@@ -28,7 +28,7 @@ class Grid:
       self.buffer.draw()
 
    def _update(self, x, y, nx, ny):
-      debug(msg='updating cache')
+      debug(msg='updating cache').flush()
       
       self.x = x
       self.y = y
@@ -51,8 +51,13 @@ class Grid:
       points.append([0, y, 0.0])
       points.append([x, y, 0.0])
 
-      self.buffer = GLArray(points)
-      self.buffer.renderMode(GL_LINES)
+      print('(x={}, y={})'.format(self.x, self.y))
+      print('(nx={}, ny={})'.format(self.nx, self.ny))
+
+      print('len(points)={}'.format(len(points)))
+
+      self.buffer = Buffer(points)
+      self.buffer.renderMode('lines')
 
 grid = Grid()
 
