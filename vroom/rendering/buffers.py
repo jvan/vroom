@@ -45,6 +45,7 @@ class Buffer:
       self._vertex_buffer = None
       self._color_buffer = None
       self._normal_buffer = None
+      self._texcoord_buffer = None
       self._index_buffer = None
       
       self._index_buffers = []
@@ -99,6 +100,11 @@ class Buffer:
       index_data = numpy.array(data, numpy.uint32)
       self._index_buffer = vbo.VBO(data=index_data, usage=usage, target=GL_ELEMENT_ARRAY_BUFFER)
 
+   def loadTexCoordData(self, data, mode='static'):
+      usage = GL_STATIC_DRAW if mode == 'static' else GL_DYNAMIC_DRAW 
+      texcoord_data = numpy.array(data, Buffer.DType)
+      self._texcoord_buffer = vbo.VBO(data=texcoord_data, usage=usage, target=GL_ARRAY_BUFFER)
+
    def renderMode(self, mode):
       if isinstance(mode, str):
          self._render_mode = Buffer.RenderModes[mode]
@@ -109,19 +115,24 @@ class Buffer:
       glPushClientAttrib(GL_CLIENT_VERTEX_ARRAY_BIT)
 
       if self._vertex_buffer:
-         glEnable(GL_VERTEX_ARRAY)
+         glEnableClientState(GL_VERTEX_ARRAY)
          self._vertex_buffer.bind()
          glVertexPointer(3, GL_FLOAT, 0, None)
          
       if self._color_buffer:
-         glEnable(GL_COLOR_ARRAY)
+         glEnableClientState(GL_COLOR_ARRAY)
          self._color_buffer.bind()
          glColorPointer(4, GL_FLOAT, 0, None)
 
       if self._normal_buffer:
-         glEnable(GL_NORMAL_ARRAY)
+         glEnableClientState(GL_NORMAL_ARRAY)
          self._normal_buffer.bind()
          glNormalPointer(GL_FLOAT, 0, None)
+
+      if self._texcoord_buffer:
+         glEnableClientState(GL_TEXTURE_COORD_ARRAY)
+         self._texcoord_buffer.bind()
+         glTexCoordPointer(2, GL_FLOAT, 0, None)
 
       if self._index_buffer:
          self._index_buffer.bind()
@@ -137,6 +148,9 @@ class Buffer:
    
       if self._normal_buffer:
          self._normal_buffer.unbind()
+
+      if self._texcoord_buffer:
+         self._texcoord_buffer.unbind()
 
       if self._index_buffer:
          self._index_buffer.unbind()
