@@ -150,6 +150,17 @@ def compute_bounding_region(vbo):
    z_min = numpy.min(vertex_data[2::3])
    z_max = numpy.max(vertex_data[2::3])
 
+   min_size = 0.5
+
+   if x_min == x_max:
+      x_min, x_max = -min_size, min_size
+
+   if y_min == y_max:
+      y_min, y_max = -min_size, min_size
+
+   if z_min == z_max:
+      z_min, z_max = -min_size, min_size
+
    glUnmapBuffer(vbo.target)
    vbo.unbind()
 
