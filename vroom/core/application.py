@@ -202,7 +202,7 @@ class LiveCodingApplication(Application):
       self.broken = False
       self.force_reload = []
 
-   def monitor(self, path, filename):
+   def monitor(self, path, filenames):
       debug().add('path', path).flush()
 
       class EventHandler(pyinotify.ProcessEvent):
@@ -214,7 +214,7 @@ class LiveCodingApplication(Application):
          def process_IN_CLOSE_WRITE(self, event):
             f = event.name and os.path.join(event.path, event.name) or event.path
             print ' !! processing event {}, {}'.format(event.path, event.name)
-            if event.name in self.watch_list:
+            if os.path.join(event.path, event.name) in self.watch_list:
                mod = reload_module() 
                self.app._display = mod.__dict__['display']
                self.app.broken = False
@@ -249,7 +249,7 @@ class LiveCodingApplication(Application):
                      self.app.force_reload.append(self.app._init)
 
       self.wm = pyinotify.WatchManager()
-      self._Notifier = pyinotify.Notifier(self.wm, EventHandler(self, [filename]), timeout=10)
+      self._Notifier = pyinotify.Notifier(self.wm, EventHandler(self, filenames), timeout=10)
       self.wm.add_watch(path, pyinotify.IN_CLOSE_WRITE)
 
    def frame(self):

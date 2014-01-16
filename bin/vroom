@@ -32,6 +32,8 @@ Debug.set_level(DEBUG)
 parser = argparse.ArgumentParser()
 parser.add_argument('--live', dest='live_coding_enabled', action='store_true', default=False,
                         help='enable live coding')
+parser.add_argument('--watch', dest='watch_list', action='append', 
+                        help='watch list for live coding updates')
 parser.add_argument('filename', metavar='FILENAME', type=str,
                         help='vroom application file')
 
@@ -109,7 +111,8 @@ def assign_app_callbacks(mod):
    debug(msg='creating application object').flush()
    if cl_args.live_coding_enabled:
       env._App = LiveCodingApplication(args=args, program_args=cl_args.program_args, **func_list)
-      env._App.monitor(env._App_Path, os.path.basename(cl_args.filename))
+      files = [os.path.abspath(x) for x in [cl_args.filename] + cl_args.watch_list]
+      env._App.monitor(env._App_Path, files)
    else:
       env._App = Application(args=args, program_args=cl_args.program_args, **func_list)
 
