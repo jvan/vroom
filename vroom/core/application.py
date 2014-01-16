@@ -269,6 +269,9 @@ class LiveCodingApplication(Application):
          pass
 
       Application.frame(self)
+
+      # Update even if there is not a defined frame function.
+      if not self._frame: pyvrui.requestUpdate()
  
    def display(self, context):
       
