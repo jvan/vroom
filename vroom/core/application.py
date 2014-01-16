@@ -85,6 +85,7 @@ class Application(pyvrui.Application, pyvrui.GLObject):
       dataItem = context.retrieveDataItem(self)
 
       glPushAttrib(GL_ALL_ATTRIB_BITS)
+      glDisable(GL_LIGHTING)
       self._display()
       glPopAttrib()
 
