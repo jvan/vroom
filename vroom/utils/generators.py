@@ -5,7 +5,7 @@ from random import random, randrange
 def random_vertex(start, stop):
    ''' Return a random [x,y,z] value in the range (start, stop).'''
 
-   return [randrange(start, stop, int=float) for i in range(3)] 
+   return [randrange(start, stop, _int=float) for i in range(3)] 
 
 def random_color():
    ''' Return a random [r,g,b] value in the range (0, 1).'''
