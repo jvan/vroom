@@ -73,13 +73,13 @@ class Buffer:
       self._num_vertices = len(vertex_data)
 
    def updateVertexData(self, data):
-      start = time()
-      vertex_data = numpy.array(data, Buffer.DType)
-      print('\t -- convert: {} (s)'.format(time()-start))
-      start =time()
-      self._vertex_buffer.set_array(vertex_data)
-      print('\t -- upload: {} (s)'.format(time()-start))
-      #self._vertex_buffer.set_array(data)
+      #start = time()
+      #vertex_data = numpy.array(data, Buffer.DType)
+      #print('\t -- convert: {} (s)'.format(time()-start))
+      #start =time()
+      #self._vertex_buffer.set_array(vertex_data)
+      #print('\t -- upload: {} (s)'.format(time()-start))
+      self._vertex_buffer.set_array(data)
 
    def loadColorData(self, data, mode='static'):
       #debug(msg='loading color data', level=VERBOSE).flush()
