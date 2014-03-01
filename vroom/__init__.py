@@ -31,6 +31,8 @@ from core.typography import text, textFont, textSize
 
 from core.tracking import tracker_debug
 
+from core.dynamics import Solver
+
 from utils.resources import get_resource
 from utils.generators import random_vertex_generator, random_color_generator
 from utils.generators import random_vertex, random_color
