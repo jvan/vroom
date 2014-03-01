@@ -23,3 +23,5 @@ def create_mesh(filename, auto_normals=True):
 
    return mesh
 
+
+Mesh.register_initializer('from_ply', create_mesh)

@@ -46,6 +46,10 @@ class Mesh(IndexedBuffer):
       self.renderMode('triangles')
 
    @staticmethod
+   def register_initializer(name, func):
+       setattr(Mesh, name, staticmethod(func))
+
+   @staticmethod
    def from_gridded_data(vertices):
       
       # Compute indices for surface faces.
