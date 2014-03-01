@@ -13,7 +13,7 @@ from core.environment import Global
 
 from core.data_stream import stream_data, stream_command
 
-from core.datatypes import BooleanOption
+from core.datatypes import BooleanOption, DynamicArray
 
 from core.color import color
 from core.color import red, green, blue, black, white
