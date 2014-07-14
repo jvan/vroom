@@ -243,10 +243,15 @@ class IndexedBuffer(Buffer):
 
       self._pre_draw()
 
+      pushMatrix()
+      translate(self.origin)
+
       for ibo, mode in self._index_buffers:
          ibo.bind()
          glDrawElements(mode, len(ibo), GL_UNSIGNED_INT, None)
          ibo.unbind()
+
+      popMatrix()
 
       self._post_draw()
 
